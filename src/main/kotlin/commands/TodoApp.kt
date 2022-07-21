@@ -15,16 +15,26 @@ import bjda.ui.core.IProps
 import bjda.ui.core.minus
 import bjda.ui.core.rangeTo
 import bjda.ui.types.Children
+import database.saveTodos
+import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
-import todo.users
+import todo.todoUIs
 
-class TodoApp : Component<IProps>(IProps()) {
-    private val state = useState(State())
+class TodoApp(initialTodos: ArrayList<String>?) : Component<TodoApp.Props>(Props()) {
+    class Props : IProps() {
+        lateinit var owner: User
+    }
+
+    private val state = useState(
+        State(
+            todos = initialTodos?: ArrayList()
+        )
+    )
 
     data class State(
-        val todos: ArrayList<String> = ArrayList(),
+        val todos: ArrayList<String>,
         var selected: Int? = null
     )
 
@@ -45,8 +55,14 @@ class TodoApp : Component<IProps>(IProps()) {
     }
 
     private val onClose by onClick { event ->
+        val owner = props.owner
+
         event.deferEdit().queue()
-        users.remove(event.user)
+        todoUIs.remove(owner)
+
+        val (todos) = state.get()
+
+        saveTodos(owner.idLong, todos.toTypedArray())
 
         ui.destroy()
     }

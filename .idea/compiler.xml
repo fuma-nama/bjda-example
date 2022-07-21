@@ -10,7 +10,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="consoleApp" target="1.7" />
+      <module name="consoleApp" target="17" />
     </bytecodeTargetLevel>
   </component>
 </project>
