@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.JDABuilder
 import org.jooq.DSLContext
 import org.jooq.SQLDialect
 import org.jooq.impl.DSL
-import todo.TodoCommands
+import commands.TodoCommands
 import token.TOKEN
 import java.net.URI
 import java.net.URISyntaxException

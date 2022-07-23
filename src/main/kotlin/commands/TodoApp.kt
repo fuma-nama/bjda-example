@@ -15,14 +15,14 @@ import bjda.ui.core.IProps
 import bjda.ui.core.minus
 import bjda.ui.core.rangeTo
 import bjda.ui.types.Children
+import commands.context.Languages
 import database.saveTodos
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
-import todo.todoUIs
 
-class TodoApp(initialTodos: ArrayList<String>?) : Component<TodoApp.Props>(Props()) {
+class TodoApp(initialTodos: ArrayList<String>?, val lang: Languages) : Component<TodoApp.Props>(Props()) {
     class Props : IProps() {
         lateinit var owner: User
     }
@@ -54,17 +54,20 @@ class TodoApp(initialTodos: ArrayList<String>?) : Component<TodoApp.Props>(Props
         }
     }
 
-    private val onClose by onClick { event ->
+    override fun onUnmount() {
         val owner = props.owner
-
-        event.deferEdit().queue()
-        todoUIs.remove(owner)
+        todoStore.remove(owner)
 
         val (todos) = state.get()
 
         saveTodos(owner.idLong, todos.toTypedArray())
+    }
 
-        ui.destroy()
+    private val onClose by onClick { event ->
+        event.deferEdit().queue {
+
+            ui.destroy()
+        }
     }
 
     private val onSelectItem by onSelect { event ->
@@ -78,13 +81,13 @@ class TodoApp(initialTodos: ArrayList<String>?) : Component<TodoApp.Props>(Props
 
         return {
             + Text()..{
-                content = "**TODO List**"
+                content = "**${ lang["title"] }**"
                 type = TextType.LINE
             }
 
             + on (todos.isEmpty()) {
                 Text()..{
-                    content = "No Todos"
+                    content = lang["placeholder"]
                     type = TextType.CODE_BLOCK
                 }
             }
@@ -100,7 +103,7 @@ class TodoApp(initialTodos: ArrayList<String>?) : Component<TodoApp.Props>(Props
             + RowLayout() -{
                 addIf (todos.isNotEmpty()) {
                     Menu(onSelectItem) {
-                        placeholder = "Select a Item"
+                        placeholder = lang["menu.placeholder"]
 
                         options = todos.mapIndexed {i, todo ->
                             SelectOption.of(todo, i.toString()).withDefault(i == selected)
@@ -109,18 +112,17 @@ class TodoApp(initialTodos: ArrayList<String>?) : Component<TodoApp.Props>(Props
                 }
 
                 + Button(onAddItem) {
-                    label = "Add"
+                    label = lang["add"]
                 }
-
 
                 if (selected != null) {
 
                     + Button(onEditItem) {
-                        label = "Edit"
+                        label = lang["edit"]
                         style = ButtonStyle.PRIMARY
                     }
                     + Button(onDeleteItem) {
-                        label = "Delete"
+                        label = lang["delete"]
                         style = ButtonStyle.DANGER
                     }
                 }
@@ -128,7 +130,7 @@ class TodoApp(initialTodos: ArrayList<String>?) : Component<TodoApp.Props>(Props
 
             + Row()-{
                 + Button(onClose) {
-                    label = "Close Todo"
+                    label = lang["close"]
                     style = ButtonStyle.DANGER
                 }
             }
@@ -136,7 +138,7 @@ class TodoApp(initialTodos: ArrayList<String>?) : Component<TodoApp.Props>(Props
     }
 
     private val addTodoForm by form {
-        title = "Add Todo"
+        title = lang["add"]
 
         onSubmit = {event ->
             state.update(event) {
@@ -147,7 +149,7 @@ class TodoApp(initialTodos: ArrayList<String>?) : Component<TodoApp.Props>(Props
         render = {
             + row {
                 + TextField("todo") {
-                    label = "TODO"
+                    label = lang["todo"]
                     style = TextInputStyle.PARAGRAPH
                 }
             }
@@ -155,7 +157,7 @@ class TodoApp(initialTodos: ArrayList<String>?) : Component<TodoApp.Props>(Props
     }
 
     private val editTodoForm by form {
-        title = "Modify Todo"
+        title = lang["edit"]
 
         onSubmit = {event ->
             val value = event.getValue("todo")!!.asString
@@ -170,7 +172,7 @@ class TodoApp(initialTodos: ArrayList<String>?) : Component<TodoApp.Props>(Props
 
             + row {
                 + TextField("todo") {
-                    label = "New Content"
+                    label = lang["form.new_content"]
                     value = todos[selected!!]
                     style = TextInputStyle.PARAGRAPH
                 }
